@@ -147,3 +147,18 @@ graph TD
    - To keep it usable, we will seed default Admin users and menu items (e.g. Hamburger, Soda) on startup.
    - We will enable `/h2-console` for easy grading visualization.
 4. **Frontend Integration:** All HTML/CSS/JS files will reside in `src/main/resources/static/`. Spring Boot will serve them automatically at `localhost:8080/`.
+
+# Contribution Conventions:
+
+1. Always push the main to your branch before a pull request.
+  - This will prevent merge conflicts and make sure the main will work after your pull request.
+
+2. Every pull request must be aproved by at least one other team member before being merged.
+  - This will help ensure good code, prevent bugs and improve the team communication
+
+3. Be clear on what you are doing.
+  - Help the other team members know what you are doing. 
+  - It will help if your commits message are clear and the pull requests too.
+  - Try to modify as little as possible in your final pull request.
+   - For example: It's not a good practice to open a pull request that changes a .css file button collor, from the frontend and at the same time, changing how an order calculates it's total.
+
