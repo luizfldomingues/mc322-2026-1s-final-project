@@ -19,7 +19,8 @@ public class Order {
     private OrderStatus status = OrderStatus.PENDING;
     private LocalDateTime createdAt;
 
-    public Order() {}
+    public Order() {
+    }
 
     public Order(String customerName, String tableNumber, LocalDateTime createdAt) {
         setCustomerName(customerName);
@@ -29,7 +30,8 @@ public class Order {
         this.createdAt = createdAt;
     }
 
-    public Order(Long id, String customerName, String tableNumber, List<OrderItem> items, OrderStatus status, LocalDateTime createdAt) {
+    public Order(Long id, String customerName, String tableNumber, List<OrderItem> items, OrderStatus status,
+            LocalDateTime createdAt) {
         this.id = id;
         setCustomerName(customerName);
         setTableNumber(tableNumber);
@@ -42,7 +44,7 @@ public class Order {
 
     public boolean hasMenuItem(MenuItem menuItem) {
         return this.items.stream()
-            .anyMatch(item -> item.getMenuItem().equals(menuItem));
+                .anyMatch(item -> item.getMenuItem().equals(menuItem));
     }
 
     public void addItem(MenuItem menuItem, int quantity) {
@@ -91,7 +93,7 @@ public class Order {
         throw new ItemNotFoundException(menuItem.getName());
     }
 
-    public void advanceStatus() {
+    public String advanceStatus() {
         if (this.status == OrderStatus.PENDING) {
             this.status = OrderStatus.PREPARING;
         } else if (this.status == OrderStatus.PREPARING) {
@@ -101,6 +103,7 @@ public class Order {
         } else {
             throw new InvalidOrderStateException("Não é possível avançar um pedido que está em " + this.status + ".");
         }
+        return "Status avançado para " + this.status;
     }
 
     public void cancel() {
