@@ -1,6 +1,6 @@
 package ros.domain.model;
 
-import ros.domain.exception.RosDomainException;
+import ros.domain.exception.InvalidQuantityException;
 
 public class OrderItem {
     private Long id;
@@ -14,7 +14,7 @@ public class OrderItem {
     public OrderItem(MenuItem menuItem, int quantity, Order order) {
         this.menuItem = menuItem;
         this.priceAtPurchase = menuItem.getPrice();
-        this.quantity = quantity;
+        setQuantity(quantity);
         this.order = order;
     }
 
@@ -22,7 +22,7 @@ public class OrderItem {
         this.id = id;
         this.menuItem = menuItem;
         this.priceAtPurchase = menuItem != null ? menuItem.getPrice() : null;
-        this.quantity = quantity;
+        setQuantity(quantity);
         this.order = order;
     }
 
@@ -30,6 +30,14 @@ public class OrderItem {
 
     public Double getSubtotal() {
         return this.quantity * this.priceAtPurchase;
+    }
+
+    @Override
+    public String toString() {
+        return "OrderItem{menuItem=" + (menuItem != null ? menuItem.getName() : "null")
+                + ", quantity=" + quantity
+                + ", priceAtPurchase=" + priceAtPurchase
+                + ", subtotal=" + getSubtotal() + "}";
     }
 
     // --- Getters and Setters ---
@@ -63,7 +71,7 @@ public class OrderItem {
     }
 
     public void setQuantity(int quantity) {
-        if (quantity <= 0) throw new RosDomainException("A quantidade do item deve ser positiva");
+        if (quantity <= 0) throw new InvalidQuantityException();
         this.quantity = quantity;
     }
 

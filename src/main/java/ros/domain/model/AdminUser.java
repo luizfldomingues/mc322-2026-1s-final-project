@@ -1,5 +1,6 @@
 package ros.domain.model;
 
+import ros.domain.exception.InvalidFieldException;
 import ros.domain.model.Auxiliary.HasherInterface;
 
 public class AdminUser {
@@ -10,13 +11,13 @@ public class AdminUser {
     public AdminUser() {}
 
     public AdminUser(String username, String passwordHash) {
-        this.username = username;
+        setUsername(username);
         this.passwordHash = passwordHash;
     }
 
     public AdminUser(Long id, String username, String passwordHash) {
         this.id = id;
-        this.username = username;
+        setUsername(username);
         this.passwordHash = passwordHash;
     }
 
@@ -27,7 +28,14 @@ public class AdminUser {
     }
 
     public void updatePassword(String inputPassword, HasherInterface hasher) {
-        passwordHash = hasher.encode(inputPassword);
+        if (inputPassword == null || inputPassword.isBlank())
+            throw new InvalidFieldException("senha");
+        this.passwordHash = hasher.encode(inputPassword);
+    }
+
+    @Override
+    public String toString() {
+        return "AdminUser{id=" + id + ", username='" + username + "'}";
     }
 
     // --- Getters and Setters ---
@@ -45,6 +53,8 @@ public class AdminUser {
     }
 
     public void setUsername(String username) {
+        if (username == null || username.isBlank())
+            throw new InvalidFieldException("username");
         this.username = username;
     }
 

@@ -4,8 +4,12 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import ros.domain.exception.DuplicateItemException;
+import ros.domain.exception.InvalidFieldException;
 import ros.domain.exception.InvalidOrderStateException;
-import ros.domain.exception.RosDomainException;
+import ros.domain.exception.InvalidQuantityException;
+import ros.domain.exception.ItemNotAvailableException;
+import ros.domain.exception.ItemNotFoundException;
 
 public class Order {
     private Long id;
@@ -18,8 +22,8 @@ public class Order {
     public Order() {}
 
     public Order(String customerName, String tableNumber, LocalDateTime createdAt) {
-        this.customerName = customerName;
-        this.tableNumber = tableNumber;
+        setCustomerName(customerName);
+        setTableNumber(tableNumber);
         this.status = OrderStatus.PENDING;
         this.items = new ArrayList<>();
         this.createdAt = createdAt;
@@ -27,9 +31,9 @@ public class Order {
 
     public Order(Long id, String customerName, String tableNumber, List<OrderItem> items, OrderStatus status, LocalDateTime createdAt) {
         this.id = id;
-        this.customerName = customerName;
-        this.tableNumber = tableNumber;
-        this.items = items;
+        setCustomerName(customerName);
+        setTableNumber(tableNumber);
+        this.items = items != null ? items : new ArrayList<>();
         this.status = status;
         this.createdAt = createdAt;
     }
@@ -46,22 +50,24 @@ public class Order {
             throw new InvalidOrderStateException("Não é possível adicionar itens a um pedido que já está em preparo.");
         }
         if (!menuItem.isAvailable()) {
-            throw new RosDomainException("O item " + menuItem.getName() + " não está disponível no momento.");
+            throw new ItemNotAvailableException(menuItem.getName());
         }
         if (this.hasMenuItem(menuItem)) {
-            throw new RosDomainException("O item " + menuItem.getName() + " já existe no pedido");
+            throw new DuplicateItemException(menuItem.getName());
         }
-        OrderItem orderItem = new OrderItem(menuItem, quantity, this);
-        this.items.add(orderItem);
+        if (quantity <= 0) {
+            throw new InvalidQuantityException();
+        }
+        this.items.add(new OrderItem(menuItem, quantity, this));
     }
 
     public void removeItem(MenuItem menuItem) {
         if (this.status != OrderStatus.PENDING) {
             throw new InvalidOrderStateException("Não é possível remover itens de um pedido que já está em preparo.");
         }
-        boolean removido = this.items.removeIf(item -> item.getMenuItem().equals(menuItem));
-        if (!removido) {
-            throw new RosDomainException("Este prato não está no pedido.");
+        boolean removed = this.items.removeIf(item -> item.getMenuItem().equals(menuItem));
+        if (!removed) {
+            throw new ItemNotFoundException(menuItem.getName());
         }
     }
 
@@ -70,7 +76,7 @@ public class Order {
             throw new InvalidOrderStateException("Não é possível alterar um pedido em preparo.");
         }
         if (newQuantity < 0) {
-            throw new RosDomainException("A quantidade não pode ser negativa.");
+            throw new InvalidQuantityException();
         }
         if (newQuantity == 0) {
             removeItem(menuItem);
@@ -82,7 +88,7 @@ public class Order {
                 return;
             }
         }
-        throw new RosDomainException("Este prato não está no pedido para ter sua quantidade alterada.");
+        throw new ItemNotFoundException(menuItem.getName());
     }
 
     public void advanceStatus() {
@@ -93,7 +99,7 @@ public class Order {
         } else if (this.status == OrderStatus.READY) {
             this.status = OrderStatus.DELIVERED;
         } else {
-            throw new InvalidOrderStateException("Não é possível avançar um pedido que está em " + this.status);
+            throw new InvalidOrderStateException("Não é possível avançar um pedido que está em " + this.status + ".");
         }
     }
 
@@ -101,15 +107,22 @@ public class Order {
         if (this.status == OrderStatus.DELIVERED) {
             throw new InvalidOrderStateException("Não é possível cancelar um pedido que já foi entregue.");
         }
+        if (this.status == OrderStatus.CANCELLED) {
+            throw new InvalidOrderStateException("O pedido já está cancelado.");
+        }
         this.status = OrderStatus.CANCELLED;
     }
 
     public Double calculateTotal() {
-        Double total = 0.0;
-        for (OrderItem item : this.items) {
-            total += item.getSubtotal();
-        }
-        return total;
+        return this.items.stream()
+                .mapToDouble(OrderItem::getSubtotal)
+                .sum();
+    }
+
+    @Override
+    public String toString() {
+        return "Order{id=" + id + ", customerName='" + customerName + "', tableNumber='" + tableNumber
+                + "', status=" + status + ", total=" + calculateTotal() + ", items=" + items.size() + "}";
     }
 
     // --- Getters and Setters ---
@@ -127,6 +140,8 @@ public class Order {
     }
 
     public void setCustomerName(String customerName) {
+        if (customerName == null || customerName.isBlank())
+            throw new InvalidFieldException("nome do cliente");
         this.customerName = customerName;
     }
 
@@ -135,6 +150,8 @@ public class Order {
     }
 
     public void setTableNumber(String tableNumber) {
+        if (tableNumber == null || tableNumber.isBlank())
+            throw new InvalidFieldException("número da mesa");
         this.tableNumber = tableNumber;
     }
 
@@ -143,11 +160,9 @@ public class Order {
     }
 
     public void setItems(List<OrderItem> items) {
-        this.items = items;
-        if (items != null) {
-            for (OrderItem item : items) {
-                item.setOrder(this);
-            }
+        this.items = items != null ? items : new ArrayList<>();
+        for (OrderItem item : this.items) {
+            item.setOrder(this);
         }
     }
 
@@ -167,7 +182,7 @@ public class Order {
         this.createdAt = createdAt;
     }
 
-    public void addOrderItem(OrderItem item) {
+    private void addOrderItem(OrderItem item) {
         items.add(item);
         item.setOrder(this);
     }
