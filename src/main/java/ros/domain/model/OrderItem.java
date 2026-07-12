@@ -9,6 +9,8 @@ public class OrderItem {
     private int quantity;
     private Order order;
 
+    public OrderItem() {}
+
     public OrderItem(MenuItem menuItem, int quantity, Order order) {
         this.menuItem = menuItem;
         this.priceAtPurchase = menuItem.getPrice();
@@ -16,15 +18,60 @@ public class OrderItem {
         this.order = order;
     }
 
-    public Double getSubtotal() {
-        return (this.quantity) * (this.priceAtPurchase);
+    public OrderItem(Long id, MenuItem menuItem, Integer quantity, Order order) {
+        this.id = id;
+        this.menuItem = menuItem;
+        this.priceAtPurchase = menuItem != null ? menuItem.getPrice() : null;
+        this.quantity = quantity;
+        this.order = order;
     }
 
-    public MenuItem getMenuItem() { return menuItem; }
-    public int getQuantity() { return quantity; }
+    // --- Domain business methods ---
 
-    public void setQuantity(int newQuantity) { 
-        if (newQuantity <= 0) throw new RosDomainException("A quantidade do item deve ser positiva");
-        this.quantity = newQuantity;
+    public Double getSubtotal() {
+        return this.quantity * this.priceAtPurchase;
+    }
+
+    // --- Getters and Setters ---
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public MenuItem getMenuItem() {
+        return menuItem;
+    }
+
+    public void setMenuItem(MenuItem menuItem) {
+        this.menuItem = menuItem;
+    }
+
+    public Double getPriceAtPurchase() {
+        return priceAtPurchase;
+    }
+
+    public void setPriceAtPurchase(Double priceAtPurchase) {
+        this.priceAtPurchase = priceAtPurchase;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        if (quantity <= 0) throw new RosDomainException("A quantidade do item deve ser positiva");
+        this.quantity = quantity;
+    }
+
+    public Order getOrder() {
+        return order;
+    }
+
+    public void setOrder(Order order) {
+        this.order = order;
     }
 }

@@ -1,26 +1,37 @@
-package ros.domain.model;
+package ros.infrastructure.persistence.entity;
 
-import java.util.Objects;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
-public class MenuItem {
+@Entity
+@Table(name = "menu_items")
+public class MenuItemEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false)
     private String name;
+
     private String description;
+
+    @Column(nullable = false)
     private Double price;
+
+    @Column(nullable = false)
     private String category;
+
+    @Column(nullable = false)
     private Boolean available = true;
 
-    public MenuItem() {}
+    public MenuItemEntity() {}
 
-    public MenuItem(String name, String description, Double price, String category) {
-        this.name = name;
-        this.description = description;
-        this.price = price;
-        this.category = category;
-        this.available = true;
-    }
-
-    public MenuItem(Long id, String name, String description, Double price, String category, Boolean available) {
+    public MenuItemEntity(Long id, String name, String description, Double price, String category, Boolean available) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -28,31 +39,6 @@ public class MenuItem {
         this.category = category;
         this.available = available;
     }
-
-    // --- Domain business methods ---
-
-    public boolean isAvailable() {
-        return available;
-    }
-
-    public void updateAvailability(boolean available) {
-        this.available = available;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        MenuItem menuItem = (MenuItem) o;
-        return this.id != null && this.id.equals(menuItem.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
-
-    // --- Getters and Setters ---
 
     public Long getId() {
         return id;
