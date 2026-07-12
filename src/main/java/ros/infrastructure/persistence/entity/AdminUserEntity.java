@@ -1,13 +1,29 @@
-package ros.domain.model;
+package ros.infrastructure.persistence.entity;
 
-public class AdminUser {
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name = "admin_users")
+public class AdminUserEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false, unique = true)
     private String username;
+
+    @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
-    public AdminUser() {}
+    public AdminUserEntity() {}
 
-    public AdminUser(Long id, String username, String passwordHash) {
+    public AdminUserEntity(Long id, String username, String passwordHash) {
         this.id = id;
         this.username = username;
         this.passwordHash = passwordHash;

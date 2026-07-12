@@ -1,20 +1,54 @@
-package ros.domain.model;
+package ros.infrastructure.persistence.entity;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+import ros.domain.model.OrderStatus;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Order {
+@Entity
+@Table(name = "orders")
+public class OrderEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "customer_name", nullable = false)
     private String customerName;
+
+    @Column(name = "table_number", nullable = false)
     private String tableNumber;
-    private List<OrderItem> items = new ArrayList<>();
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrderItemEntity> items = new ArrayList<>();
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private OrderStatus status = OrderStatus.PENDING;
+
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    public Order() {}
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+    }
 
-    public Order(Long id, String customerName, String tableNumber, List<OrderItem> items, OrderStatus status, LocalDateTime createdAt) {
+    public OrderEntity() {}
+
+    public OrderEntity(Long id, String customerName, String tableNumber, List<OrderItemEntity> items, OrderStatus status, LocalDateTime createdAt) {
         this.id = id;
         this.customerName = customerName;
         this.tableNumber = tableNumber;
@@ -47,14 +81,14 @@ public class Order {
         this.tableNumber = tableNumber;
     }
 
-    public List<OrderItem> getItems() {
+    public List<OrderItemEntity> getItems() {
         return items;
     }
 
-    public void setItems(List<OrderItem> items) {
+    public void setItems(List<OrderItemEntity> items) {
         this.items = items;
         if (items != null) {
-            for (OrderItem item : items) {
+            for (OrderItemEntity item : items) {
                 item.setOrder(this);
             }
         }
@@ -76,14 +110,14 @@ public class Order {
         this.createdAt = createdAt;
     }
 
-    public void addOrderItem(OrderItem item) {
+    public void addOrderItem(OrderItemEntity item) {
         items.add(item);
         item.setOrder(this);
     }
 
     public Double calculateTotal() {
         return items.stream()
-                .mapToDouble(OrderItem::getSubtotal)
+                .mapToDouble(OrderItemEntity::getSubtotal)
                 .sum();
     }
 }
