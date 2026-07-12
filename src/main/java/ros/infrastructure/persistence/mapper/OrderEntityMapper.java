@@ -48,9 +48,11 @@ public class OrderEntityMapper {
 
     public static OrderItem toDomain(OrderItemEntity entity) {
         if (entity == null) return null;
+        MenuItem menuItem = toDomain(entity.getMenuItem());
         OrderItem model = new OrderItem();
         model.setId(entity.getId());
-        model.setMenuItem(toDomain(entity.getMenuItem()));
+        model.setMenuItem(menuItem);
+        model.setPriceAtPurchase(menuItem != null ? menuItem.getPrice() : null);
         model.setQuantity(entity.getQuantity());
         return model;
     }
