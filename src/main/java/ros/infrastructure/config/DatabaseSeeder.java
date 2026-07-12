@@ -2,8 +2,8 @@ package ros.infrastructure.config;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
-import ros.domain.model.AdminUser;
-import ros.domain.model.MenuItem;
+import ros.infrastructure.persistence.entity.AdminUserEntity;
+import ros.infrastructure.persistence.entity.MenuItemEntity;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
@@ -17,12 +17,12 @@ public class DatabaseSeeder implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
-        Long menuCount = entityManager.createQuery("SELECT COUNT(m) FROM MenuItem m", Long.class).getSingleResult();
-        
+        Long menuCount = entityManager.createQuery("SELECT COUNT(m) FROM MenuItemEntity m", Long.class).getSingleResult();
+
         if (menuCount == 0) {
             System.out.println("Criando banco de dados com itens iniciais...");
-            
-            MenuItem item1 = new MenuItem();
+
+            MenuItemEntity item1 = new MenuItemEntity();
             item1.setName("Hambúrguer Clássico");
             item1.setDescription("Pão de brioche, carne de 150g, queijo cheddar e molho especial.");
             item1.setPrice(28.90);
@@ -30,7 +30,7 @@ public class DatabaseSeeder implements CommandLineRunner {
             item1.setAvailable(true);
             entityManager.persist(item1);
 
-            MenuItem item2 = new MenuItem();
+            MenuItemEntity item2 = new MenuItemEntity();
             item2.setName("Batata Frita Rústica");
             item2.setDescription("Batatas com corte rústico, temperadas com páprica e alecrim.");
             item2.setPrice(15.00);
@@ -38,7 +38,7 @@ public class DatabaseSeeder implements CommandLineRunner {
             item2.setAvailable(true);
             entityManager.persist(item2);
 
-            MenuItem item3 = new MenuItem();
+            MenuItemEntity item3 = new MenuItemEntity();
             item3.setName("Refrigerante de Lata");
             item3.setDescription("Lata de 350ml.");
             item3.setPrice(6.00);
@@ -46,11 +46,11 @@ public class DatabaseSeeder implements CommandLineRunner {
             item3.setAvailable(true);
             entityManager.persist(item3);
 
-            AdminUser admin = new AdminUser();
+            AdminUserEntity admin = new AdminUserEntity();
             admin.setUsername("admin");
-            admin.setPasswordHash("admin"); 
+            admin.setPasswordHash("admin");
             entityManager.persist(admin);
-            
+
             System.out.println("Banco de dados criado com sucesso!");
         }
     }

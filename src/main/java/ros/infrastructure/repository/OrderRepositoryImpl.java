@@ -7,9 +7,12 @@ import org.springframework.stereotype.Component;
 import ros.domain.model.Order;
 import ros.domain.model.Filters.OrderFilter;
 import ros.domain.repository.OrderRepository;
+import ros.infrastructure.persistence.entity.OrderEntity;
+import ros.infrastructure.persistence.mapper.OrderEntityMapper;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class OrderRepositoryImpl implements OrderRepository {
@@ -25,25 +28,30 @@ public class OrderRepositoryImpl implements OrderRepository {
 
     @Override
     public Order save(Order order) {
-        return jpaOrderRepository.save(order);
+        OrderEntity saved = jpaOrderRepository.save(OrderEntityMapper.toEntity(order));
+        return OrderEntityMapper.toDomain(saved);
     }
 
     @Override
     public Order findById(Long id) {
-        return jpaOrderRepository.findById(id).orElse(null);
+        return jpaOrderRepository.findById(id)
+                .map(OrderEntityMapper::toDomain)
+                .orElse(null);
     }
 
     @Override
     public List<Order> findAll() {
-        return jpaOrderRepository.findAll();
+        return jpaOrderRepository.findAll().stream()
+                .map(OrderEntityMapper::toDomain)
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<Order> getByFilter(OrderFilter filter) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<Order> query = cb.createQuery(Order.class);
-        Root<Order> order = query.from(Order.class);
-        
+        CriteriaQuery<OrderEntity> query = cb.createQuery(OrderEntity.class);
+        Root<OrderEntity> order = query.from(OrderEntity.class);
+
         List<Predicate> predicates = new ArrayList<>();
 
         if (filter != null) {
@@ -57,7 +65,7 @@ public class OrderRepositoryImpl implements OrderRepository {
                 predicates.add(order.get("status").in(filter.getStatuses()));
             }
             if (filter.getMinValue() != null) {
-                Join<Order, ?> itemJoin = order.join("items");
+                Join<OrderEntity, ?> itemJoin = order.join("items");
                 Join<?, ?> menuItemJoin = itemJoin.join("menuItem");
                 query.groupBy(
                     order.get("id"),
@@ -73,6 +81,8 @@ public class OrderRepositoryImpl implements OrderRepository {
         }
 
         query.where(predicates.toArray(new Predicate[0]));
-        return entityManager.createQuery(query).getResultList();
+        return entityManager.createQuery(query).getResultList().stream()
+                .map(OrderEntityMapper::toDomain)
+                .collect(Collectors.toList());
     }
 }

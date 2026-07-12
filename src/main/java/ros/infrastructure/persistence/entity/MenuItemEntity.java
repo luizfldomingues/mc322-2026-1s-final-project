@@ -1,16 +1,37 @@
-package ros.domain.model;
+package ros.infrastructure.persistence.entity;
 
-public class MenuItem {
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name = "menu_items")
+public class MenuItemEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false)
     private String name;
+
     private String description;
+
+    @Column(nullable = false)
     private Double price;
+
+    @Column(nullable = false)
     private String category;
+
+    @Column(nullable = false)
     private Boolean available = true;
 
-    public MenuItem() {}
+    public MenuItemEntity() {}
 
-    public MenuItem(Long id, String name, String description, Double price, String category, Boolean available) {
+    public MenuItemEntity(Long id, String name, String description, Double price, String category, Boolean available) {
         this.id = id;
         this.name = name;
         this.description = description;
