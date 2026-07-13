@@ -1,37 +1,56 @@
 package ros.infrastructure.web;
 
-import ros.domain.model.MenuItem;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import ros.application.dto.MenuItemRequest;
+import ros.application.service.MenuApplicationService;
+import ros.domain.model.MenuItem;
 
-import ros.infrastructure.repository.MenuItemRepositoryImpl;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/menu")
 public class MenuController {
 
-    private final MenuItemRepositoryImpl MenuRepository;
+    private final MenuApplicationService menuApplicationService;
 
-    public MenuController(MenuItemRepositoryImpl MenuRepository) {
-        this.MenuRepository = MenuRepository;
+    public MenuController(MenuApplicationService menuApplicationService) {
+        this.menuApplicationService = menuApplicationService;
+    }
+
+    @GetMapping
+    public ResponseEntity<List<MenuItem>> getAvailableMenu() {
+        return ResponseEntity.ok(menuApplicationService.getAllAvailableMenuItems());
     }
 
     @PostMapping
-    public ResponseEntity<String> createItem(@RequestParam("id") Long id, @RequestParam("name") String name,
-            @RequestParam("description") String description, @RequestParam("price") Double price,
-            @RequestParam("category") String category, @RequestParam("available") Boolean available) {
-        MenuItem menuItem = new MenuItem(id, name, description, price, category, available);
-        MenuRepository.save(menuItem);
-        return ResponseEntity.ok("Menu item created successfully!");
+    public ResponseEntity<MenuItem> createItem(@RequestBody MenuItemRequest request) {
+        MenuItem created = menuApplicationService.createMenuItem(
+                request.name(),
+                request.description(),
+                request.price(),
+                request.category()
+        );
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    @DeleteMapping
-    public ResponseEntity<String> deleteItem(@RequestParam("id") Long id) {
-        MenuRepository.deleteById(id);
-        return ResponseEntity.ok("Menu item deleted successfully!");
+    @PutMapping("/{id}")
+    public ResponseEntity<MenuItem> updateItem(@PathVariable Long id, @RequestBody MenuItemRequest request) {
+        MenuItem updated = menuApplicationService.updateMenuItem(
+                id,
+                request.name(),
+                request.description(),
+                request.price(),
+                request.category(),
+                request.available()
+        );
+        return ResponseEntity.ok(updated);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteItem(@PathVariable Long id) {
+        menuApplicationService.deleteMenuItem(id);
+        return ResponseEntity.noContent().build();
     }
 }

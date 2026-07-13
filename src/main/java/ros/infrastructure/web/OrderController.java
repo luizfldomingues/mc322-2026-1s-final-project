@@ -1,52 +1,52 @@
 package ros.infrastructure.web;
 
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import ros.application.dto.OrderCreationRequest;
+import ros.application.service.OrderApplicationService;
+import ros.domain.model.Filters.OrderFilter;
+import ros.domain.model.Order;
+import ros.domain.model.OrderStatus;
+
 import java.time.LocalDateTime;
 import java.util.List;
-
-import ros.domain.model.Order;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
-import ros.infrastructure.repository.OrderRepositoryImpl;
-
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 
 @RestController
 @RequestMapping("/api/orders")
 public class OrderController {
 
-    private final OrderRepositoryImpl orderRepository;
+    private final OrderApplicationService orderApplicationService;
 
-    public OrderController(OrderRepositoryImpl orderRepository) {
-        this.orderRepository = orderRepository;
+    public OrderController(OrderApplicationService orderApplicationService) {
+        this.orderApplicationService = orderApplicationService;
     }
 
     @GetMapping
-    public ResponseEntity<List<Order>> getAllOrders() {
-        return ResponseEntity.ok(orderRepository.findAll());
-    }
+    public ResponseEntity<List<Order>> getOrders(
+            @RequestParam(value = "statuses", required = false) List<OrderStatus> statuses,
+            @RequestParam(value = "fromDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDate,
+            @RequestParam(value = "toDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate,
+            @RequestParam(value = "minValue", required = false) Double minValue) {
 
-    @GetMapping("/test")
-    public ResponseEntity<String> testEndpoint() {
-        return ResponseEntity.ok("Test endpoint is working!");
-    }
+        if (statuses == null && fromDate == null && toDate == null && minValue == null) {
+            return ResponseEntity.ok(orderApplicationService.getAllOrders());
+        }
 
-    @PutMapping("/{id}/status")
-    public ResponseEntity<String> updateUser(@PathVariable Long id, @RequestBody String status) {
-        return ResponseEntity.ok(orderRepository.findById(id).advanceStatus());
+        OrderFilter filter = new OrderFilter(fromDate, toDate, statuses, minValue);
+        return ResponseEntity.ok(orderApplicationService.getOrdersByFilter(filter));
     }
 
     @PostMapping
-    public ResponseEntity<String> createOrder(@RequestParam("name") String name, @RequestParam("table") String table,
-            @RequestParam("createdAt") LocalDateTime createdAt) {
-        Order order = new Order(name, table, createdAt);
-        orderRepository.save(order);
-        return ResponseEntity.ok("Order created successfully!");
+    public ResponseEntity<Order> createOrder(@RequestBody OrderCreationRequest request) {
+        Order created = orderApplicationService.createOrder(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    @PutMapping("/{id}/status")
+    public ResponseEntity<Order> advanceOrderStatus(@PathVariable Long id) {
+        Order updated = orderApplicationService.advanceOrderStatus(id);
+        return ResponseEntity.ok(updated);
     }
 }
