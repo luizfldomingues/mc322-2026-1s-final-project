@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RestController;
 import ros.infrastructure.repository.OrderRepositoryImpl;
 
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
-import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequestMapping("/api/orders")

@@ -1,7 +1,5 @@
 package ros.infrastructure.web;
 
-import java.util.List;
-
 import ros.domain.model.MenuItem;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
