@@ -4,7 +4,7 @@ A clean, object-oriented Java backend with a dynamic HTML/CSS/JS frontend that a
 
 ---
 
-## 1. Project Overview & User Flows
+1. **Project Overview & User Flows**
 
 1. **Customer Flow (No Login):**
    - Accesses the customer view (e.g., `/index.html?table=4`).
@@ -13,8 +13,7 @@ A clean, object-oriented Java backend with a dynamic HTML/CSS/JS frontend that a
    - Browses menu categories, adds items to a shopping cart.
    - Reviews the cart (overview) and submits the order.
 
-2. **Admin/Manager Flow (Login Required):**
-   - Accesses `/admin/login.html` and logs in with credentials.
+2. **Admin/Manager Flow:**
    - Gains access to the Manager Dashboard:
      - **Order Tracking:** View all active orders, filter by status, and change order status (e.g., `PENDING` -> `PREPARING` -> `READY` -> `DELIVERED`).
      - **Menu Editor:** Create, edit, toggle availability, or delete menu items.
@@ -28,12 +27,6 @@ The system uses strong OOP principles such as encapsulation, composition, and ag
 
 ```mermaid
 classDiagram
- class AdminUser {
- -Long id
- -String username
- -String passwordHash
- +verifyPassword(String) boolean
- }
  class MenuItem {
  -Long id
  -String name
@@ -94,16 +87,14 @@ graph TD
 
 ### Components per Package
 
-- **model:** Standard JPA entities (Order, OrderItem, MenuItem, AdminUser, OrderStatus).
+- **model:** Standard JPA entities (Order, OrderItem, MenuItem, OrderStatus).
 - **repository:** Spring Data JPA repositories extending JpaRepository for data access.
 - **service:**
   - MenuService: Handles listing, adding, and updating menu items.
   - OrderService: Manages business logic of creating orders, checking item availability, calculating total prices, and state changes.
-  - AuthService: Simple session or token-based validation for the Admin.
 - **controller:**
-  - MenuController: Handles public menu fetching, and admin-authenticated menu modifications.
-  - OrderController: Handles public order placement, and admin-authenticated order management.
-  - AuthController: Handles admin login and logout endpoints.
+  - MenuController: Handles public menu fetching, and menu modifications.
+  - OrderController: Handles public order placement, and order management.
 
 ---
 
@@ -125,10 +116,8 @@ graph TD
     }
     ```
 
-### Admin Endpoints (Session or Custom Token Verification Required)
+### Admin Endpoints
 
-- `POST /api/auth/login` - Validate admin credentials and start session.
-- `POST /api/auth/logout` - Invalidate session.
 - `GET /api/orders` - Fetch all orders (with filters like status).
 - `PUT /api/orders/{id}/status` - Advance/change order status.
 - `POST /api/orders` - Admins can also create new orders (same as public).
@@ -144,7 +133,7 @@ graph TD
 2. **Java Version:** Java 17+
 3. **ORM / Database:** Spring Data JPA (Hibernate) mapping to an **H2 In-Memory Database**.
    - H2 runs in memory, so restarting the app clears the data.
-   - To keep it usable, we will seed default Admin users and menu items (e.g. Hamburger, Soda) on startup.
+   - To keep it usable, we will seed default menu items (e.g. Hamburger, Soda) on startup.
    - We will enable `/h2-console` for easy grading visualization.
 4. **Frontend Integration:** All HTML/CSS/JS files will reside in `src/main/resources/static/`. Spring Boot will serve them automatically at `localhost:8080/`.
 

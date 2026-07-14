@@ -2,7 +2,6 @@ package ros.infrastructure.config;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
-import ros.infrastructure.persistence.entity.AdminUserEntity;
 import ros.infrastructure.persistence.entity.MenuItemEntity;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -45,11 +44,6 @@ public class DatabaseSeeder implements CommandLineRunner {
             item3.setCategory("Bebidas");
             item3.setAvailable(true);
             entityManager.persist(item3);
-
-            AdminUserEntity admin = new AdminUserEntity();
-            admin.setUsername("admin");
-            admin.setPasswordHash("admin");
-            entityManager.persist(admin);
 
             System.out.println("Banco de dados criado com sucesso!");
         }
