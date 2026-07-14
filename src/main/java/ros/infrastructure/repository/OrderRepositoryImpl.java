@@ -7,6 +7,8 @@ import org.springframework.stereotype.Component;
 import ros.domain.model.Order;
 import ros.domain.model.Filters.OrderFilter;
 import ros.domain.repository.OrderRepository;
+import ros.infrastructure.persistence.entity.MenuItemEntity;
+import ros.infrastructure.persistence.entity.OrderItemEntity;
 import ros.infrastructure.persistence.entity.OrderEntity;
 import ros.infrastructure.persistence.mapper.OrderEntityMapper;
 
@@ -28,7 +30,19 @@ public class OrderRepositoryImpl implements OrderRepository {
 
     @Override
     public Order save(Order order) {
-        OrderEntity saved = jpaOrderRepository.save(OrderEntityMapper.toEntity(order));
+        OrderEntity entity = OrderEntityMapper.toEntity(order);
+        if (entity.getItems() != null) {
+            for (OrderItemEntity item : entity.getItems()) {
+                if (item.getMenuItem() != null && item.getMenuItem().getId() != null) {
+                    MenuItemEntity managedMenuItem = entityManager.find(MenuItemEntity.class, item.getMenuItem().getId());
+                    if (managedMenuItem == null) {
+                        throw new ros.domain.exception.ItemNotFoundException("MenuItem com ID " + item.getMenuItem().getId() + " não encontrado");
+                    }
+                    item.setMenuItem(managedMenuItem);
+                }
+            }
+        }
+        OrderEntity saved = jpaOrderRepository.save(entity);
         return OrderEntityMapper.toDomain(saved);
     }
 

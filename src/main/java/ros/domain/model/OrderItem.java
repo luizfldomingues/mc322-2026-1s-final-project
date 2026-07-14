@@ -75,6 +75,7 @@ public class OrderItem {
         this.quantity = quantity;
     }
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     public Order getOrder() {
         return order;
     }
