@@ -10,8 +10,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * JPA-backed implementation of the domain {@link MenuItemRepository}.
+ */
 @Component
 public class MenuItemRepositoryImpl implements MenuItemRepository {
+
     private final JpaMenuItemRepository jpaMenuItemRepository;
 
     public MenuItemRepositoryImpl(JpaMenuItemRepository jpaMenuItemRepository) {

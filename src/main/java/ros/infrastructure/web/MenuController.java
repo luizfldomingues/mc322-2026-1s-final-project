@@ -20,8 +20,16 @@ public class MenuController {
     }
 
     @GetMapping
-    public ResponseEntity<List<MenuItem>> getAvailableMenu() {
+    public ResponseEntity<List<MenuItem>> getMenu(@RequestParam(value = "includeUnavailable", required = false, defaultValue = "false") boolean includeUnavailable) {
+        if (includeUnavailable) {
+            return ResponseEntity.ok(menuApplicationService.getAllMenuItems());
+        }
         return ResponseEntity.ok(menuApplicationService.getAllAvailableMenuItems());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<MenuItem> getMenuItemById(@PathVariable Long id) {
+        return ResponseEntity.ok(menuApplicationService.getMenuItemById(id));
     }
 
     @PostMapping

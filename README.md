@@ -132,15 +132,19 @@ Interactive API docs are auto-generated via SpringDoc:
 ## 5. API Endpoints
 
 ### Menu Endpoints
-- `GET /api/menu` - Fetch list of active/available menu items.
+- `GET /api/menu` - Fetch list of active/available menu items. Supports optional query parameter `includeUnavailable=true` to retrieve disabled items.
+- `GET /api/menu/{id}` - Retrieve details of a specific menu item.
 - `POST /api/menu` - Create a new menu item.
-- `PUT /api/menu/{id}` - Edit a menu item.
+- `PUT /api/menu/{id}` - Edit a menu item (supports toggling availability).
 - `DELETE /api/menu/{id}` - Delete a menu item.
 
 ### Order Endpoints
 - `GET /api/orders` - Fetch all orders (supports filtering by `statuses`, `fromDate`, `toDate`, and `minValue`).
+- `GET /api/orders/{id}` - Retrieve details of a specific order.
 - `POST /api/orders` - Place a new order.
+- `PUT /api/orders/{id}` - Update a pending order's details (customer name, table number, items).
 - `PUT /api/orders/{id}/status` - Advance order status to the next step (`PENDING` -> `PREPARING` -> `READY` -> `DELIVERED`).
+- `PUT /api/orders/{id}/cancel` - Cancel an order.
 
 ---
 
