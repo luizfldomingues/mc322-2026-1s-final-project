@@ -1,13 +1,13 @@
 # Restaurant Order System (MC322 Final Project)
 
-A clean, object-oriented Java backend REST API designed with Hexagonal Architecture/Clean Architecture principles. The system allows customers to view the menu and place orders, and managers to track/update order statuses and customize the menu.
+A clean, object-oriented Java backend REST API designed with Clean Architecture principles. The system allows customers to view the menu and place orders, and managers to track/update order statuses and customize the menu.
 
 ---
 
 ## 1. Project Overview & Security Model
 
 ### Pure Backend REST API
-This repository contains the backend REST API for the Restaurant Order System. It does not include a frontend web client; all interactions are performed via HTTP requests (e.g., using Swagger UI, Postman, or `curl`).
+This repository contains the backend REST API for the Restaurant Order System. It does not include a frontend web client; all interactions are performed via HTTP requests (e.g., using Swagger UI, HTTP client files, or `curl`).
 
 ### No-Auth Security Model
 To simplify testing, local development, and grading, the system operates in a **"No Auth" (public access)** configuration:
@@ -17,9 +17,9 @@ To simplify testing, local development, and grading, the system operates in a **
 
 ---
 
-## 2. OOP Class Design (Domain Entities)
+## 2. OOP Class Design (Domain Layer & State Pattern)
 
-The system uses strong OOP principles such as encapsulation, composition, and aggregation.
+The system enforces strict object-oriented design patterns, encapsulation, and contract principles (LSP, Demeter, Tell Don't Ask).
 
 ```mermaid
 classDiagram
@@ -30,8 +30,9 @@ classDiagram
  -Double price
  -String category
  -Boolean available
- +isAvailable()
- +updateAvailability(boolean)
+ +isAvailable() boolean
+ +updateAvailability(boolean) void
+ +update(String, String, Double, String, Boolean) void
  }
  class Order {
  -Long id
@@ -40,15 +41,22 @@ classDiagram
  -List~OrderItem~ items
  -OrderStatus status
  -LocalDateTime createdAt
+ -OrderState state
  +calculateTotal() Double
- +addOrderItem(OrderItem)
- +updateStatus(OrderStatus)
+ +addItem(MenuItem, int) void
+ +removeItem(MenuItem) void
+ +changeItemQuantity(MenuItem, int) void
+ +advanceStatus() String
+ +cancel() void
+ +replaceItems(List~OrderItem~) void
  }
  class OrderItem {
  -Long id
  -MenuItem menuItem
- -Integer quantity
+ -Double priceAtPurchase
+ -int quantity
  +getSubtotal() Double
+ +changeQuantity(int) void
  }
  class OrderStatus {
  <<enumeration>>
@@ -58,20 +66,44 @@ classDiagram
  DELIVERED
  CANCELLED
  }
+ class OrderState {
+ <<interface>>
+ +advance(Order) String
+ +cancel(Order) void
+ +canModifyItems() boolean
+ }
+ class PendingState {
+ }
+ class PreparingState {
+ }
+ class ReadyState {
+ }
+ class DeliveredState {
+ }
+ class CancelledState {
+ }
+
  Order *-- OrderItem : composition
  OrderItem o-- MenuItem : aggregation
  Order --> OrderStatus : status
+ Order --> OrderState : state
+ OrderState <|.. PendingState : realizes
+ OrderState <|.. PreparingState : realizes
+ OrderState <|.. ReadyState : realizes
+ OrderState <|.. DeliveredState : realizes
+ OrderState <|.. CancelledState : realizes
 ```
 
-- **Encapsulation:** Private variables are accessed via public getters/setters.
+- **Encapsulation (Logical Shielding):** Private variables are heavily protected. Public setters that compromise class invariants (like `setId()`, `setStatus()`, or `setCreatedAt()`) do not exist. Any mutation is triggered through domain-intent methods (`addItem`, `removeItem`, `advanceStatus`, `cancel`). Structural collections are returned as unmodifiable lists (`Collections.unmodifiableList`) to prevent direct list manipulation.
+- **State Design Pattern:** Order lifecycle transitions are managed polymorphically through concrete state classes implementing the `OrderState` interface, replacing procedural `if-else` flows and upholding the Open/Closed Principle.
 - **Composition:** An `Order` owns its list of `OrderItem` instances. Deleting an order cascades and removes its items.
-- **Aggregation:** `OrderItem` references a `MenuItem`. The menu item exists independently of any individual order.
+- **Aggregation:** `OrderItem` references a `MenuItem`. The menu item exists independently of any individual order and captures `priceAtPurchase` to preserve historical order receipts.
 
 ---
 
-## 3. High-Level Architecture (Hexagonal / Clean Architecture)
+## 3. High-Level Architecture (Clean Architecture)
 
-The codebase is organized following Hexagonal Architecture principles to decouple the core business domain from external framework details:
+The codebase is organized following Clean Architecture principles to decouple the core business domain from external framework and database details:
 
 ```mermaid
 graph TD
@@ -94,17 +126,17 @@ graph TD
 ```
 
 ### Package Layout
-- **`ros.domain`:** The core domain layer. Free from Spring Framework or JPA annotations. Contains pure domain entities (`Order`, `MenuItem`, `OrderItem`), exceptions, and interfaces (`OrderRepository`, `MenuRepository`).
-- **`ros.application`:** Coordinates application use cases. Contains DTO classes (`MenuItemRequest`, `OrderCreationRequest`) and application services (`OrderApplicationService`, `MenuApplicationService`).
-- **`ros.infrastructure`:** Deals with configuration and infrastructure details.
-  - `web`: REST Controllers exposing the endpoints.
+- **`ros.domain`**: The core domain layer. Free from Spring Framework or JPA annotations. Contains pure domain entities (`Order`, `MenuItem`, `OrderItem`), exceptions, the State Pattern implementation, and interfaces (`OrderRepository`, `MenuItemRepository`).
+- **`ros.application`**: Coordinates application use cases. Contains DTO classes (`MenuItemRequest`, `OrderCreationRequest`), custom application exceptions, and application services (`OrderApplicationService`, `MenuApplicationService`).
+- **`ros.infrastructure`**: Deals with configuration and framework infrastructure.
+  - `web`: REST Controllers exposing the endpoints, along with the `GlobalExceptionHandler` mapping domain/application errors into HTTP 4xx statuses.
   - `persistence`: JPA Database entities (`OrderEntity`, `MenuItemEntity`, `OrderItemEntity`) and standard Spring Data JpaRepositories.
-  - `repository`: Implementation of domain repository interfaces adapting the JPA repositories.
+  - `repository`: Implementation of domain repository interfaces adapting the JPA repositories using type-safe generics mapping (`Mapper<D, E>`).
   - `config`: Setup classes, including `DatabaseSeeder` which populates H2 on startup with mock data.
 
 ---
 
-## 4. Running the Application
+## 4. Running the Application & Tests
 
 ### Prerequisites
 - Java 17 or higher
@@ -116,9 +148,14 @@ Run the application using Maven:
 mvn clean spring-boot:run
 ```
 
+### Running Tests
+Execute the comprehensive automated test suite (53 unit/integration tests covering the web, service, and domain state machine layers):
+```bash
+mvn test
+```
+
 ### H2 Database Console
 - **URL:** `http://localhost:8080/h2-console`
-- **Driver Class:** `org.h2.Driver`
 - **JDBC URL:** `jdbc:h2:mem:restaurantdb`
 - **Username:** `sa`
 - **Password:** *(leave empty)*
@@ -129,22 +166,15 @@ Interactive API docs are auto-generated via SpringDoc:
 
 ---
 
-## 5. API Endpoints
+## 5. Manual Testing & Oral Defense Guide
 
-### Menu Endpoints
-- `GET /api/menu` - Fetch list of active/available menu items. Supports optional query parameter `includeUnavailable=true` to retrieve disabled items.
-- `GET /api/menu/{id}` - Retrieve details of a specific menu item.
-- `POST /api/menu` - Create a new menu item.
-- `PUT /api/menu/{id}` - Edit a menu item (supports toggling availability).
-- `DELETE /api/menu/{id}` - Delete a menu item.
+A complete manual test suite has been prepared under the `/manual-tests` folder to verify the API's robustness and error handling during oral evaluation.
 
-### Order Endpoints
-- `GET /api/orders` - Fetch all orders (supports filtering by `statuses`, `fromDate`, `toDate`, and `minValue`).
-- `GET /api/orders/{id}` - Retrieve details of a specific order.
-- `POST /api/orders` - Place a new order.
-- `PUT /api/orders/{id}` - Update a pending order's details (customer name, table number, items).
-- `PUT /api/orders/{id}/status` - Advance order status to the next step (`PENDING` -> `PREPARING` -> `READY` -> `DELIVERED`).
-- `PUT /api/orders/{id}/cancel` - Cancel an order.
+- **[api-tests.http](file:///home/luizdomingues/Desktop/mc322/projeto_final/manual-tests/api-tests.http)**: An interactive HTTP client script containing Happy and Sad path queries that can be run directly inside VS Code (using the *REST Client* extension) or IntelliJ.
+- **[README.md (Defense Script)](file:///home/luizdomingues/Desktop/mc322/projeto_final/manual-tests/README.md)**: A step-by-step walkthrough script for the oral presentation, demonstrating:
+  1. Fail-fast domain validations.
+  2. The State Design Pattern preventing illegal order operations (e.g. updating items in prepared orders).
+  3. Proper HTTP 4xx mapping for domain errors (such as duplicate items or double-cancellations).
 
 ---
 
