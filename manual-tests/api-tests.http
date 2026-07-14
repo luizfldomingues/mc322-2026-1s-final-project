@@ -1,0 +1,185 @@
+@baseUrl = http://localhost:8080/api
+
+# =============================================================================
+# 📋 CARDÁPIO (MENU ITEMS)
+# =============================================================================
+
+### 1. Listar apenas itens disponíveis (Happy Path)
+GET {{baseUrl}}/menu
+Accept: application/json
+
+### 2. Listar todos os itens (incluindo indisponíveis)
+GET {{baseUrl}}/menu?includeUnavailable=true
+Accept: application/json
+
+### 3. Cadastrar um novo item no cardápio (Happy Path)
+POST {{baseUrl}}/menu
+Content-Type: application/json
+
+{
+  "name": "Suco de Laranja Natural",
+  "description": "Suco espremido na hora 350ml",
+  "price": 8.50,
+  "category": "Bebidas",
+  "available": true
+}
+
+### 4. Tentar cadastrar item com preço negativo (Sad Path - Validação)
+# Esperado: 400 Bad Request com mensagem descritiva
+POST {{baseUrl}}/menu
+Content-Type: application/json
+
+{
+  "name": "Suco Grátis",
+  "description": "Preço inválido",
+  "price": -2.00,
+  "category": "Bebidas",
+  "available": true
+}
+
+
+# =============================================================================
+# 🛒 FLUXO DE PEDIDOS (ORDER FLOW)
+# =============================================================================
+
+### 5. Criar um novo pedido válido (Happy Path)
+# Esperado: 201 Created. Anote o "id" retornado no JSON para os próximos testes!
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "customerName": "Luiz Domingues",
+  "tableNumber": "15",
+  "items": [
+    {
+      "menuItemId": 1,
+      "quantity": 2
+    },
+    {
+      "menuItemId": 3,
+      "quantity": 1
+    }
+  ]
+}
+
+### 6. Tentar criar pedido com item inexistente (Sad Path - Fail-Fast)
+# Esperado: 404 Not Found (ResourceNotFoundException)
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "customerName": "Sem Noção",
+  "tableNumber": "99",
+  "items": [
+    {
+      "menuItemId": 9999,
+      "quantity": 1
+    }
+  ]
+}
+
+### 7. Tentar criar pedido com quantidade zero ou negativa (Sad Path - Validação)
+# Esperado: 400 Bad Request (InvalidQuantityException)
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "customerName": "Quantidade Errada",
+  "tableNumber": "4",
+  "items": [
+    {
+      "menuItemId": 1,
+      "quantity": 0
+    }
+  ]
+}
+
+
+# =============================================================================
+# 🔄 CICLO DE VIDA E BLINDAGEM DE ESTADO (STATE MACHINE & ENCAPSULATION)
+# =============================================================================
+
+### 8. Atualizar pedido enquanto PENDENTE (Happy Path)
+# Substitua o id "1" na URL pelo ID retornado na criação (se necessário)
+PUT {{baseUrl}}/orders/1
+Content-Type: application/json
+
+{
+  "customerName": "Luiz F. Domingues",
+  "tableNumber": "15",
+  "items": [
+    {
+      "menuItemId": 1,
+      "quantity": 3
+    }
+  ]
+}
+
+### 9. Avançar pedido para EM PREPARO (PREPARING)
+PUT {{baseUrl}}/orders/1/status
+Accept: application/json
+
+### 10. Tentar atualizar itens de um pedido EM PREPARO (Sad Path - Encapsulation Guard)
+# Esperado: 400 Bad Request (InvalidOrderStateException) - Não deve permitir alterar a estrutura
+PUT {{baseUrl}}/orders/1
+Content-Type: application/json
+
+{
+  "customerName": "Tentativa Invasiva",
+  "tableNumber": "15",
+  "items": [
+    {
+      "menuItemId": 2,
+      "quantity": 5
+    }
+  ]
+}
+
+### 11. Avançar pedido para PRONTO (READY)
+PUT {{baseUrl}}/orders/1/status
+Accept: application/json
+
+### 12. Avançar pedido para ENTREGUE (DELIVERED)
+PUT {{baseUrl}}/orders/1/status
+Accept: application/json
+
+### 13. Tentar avançar um pedido que já foi ENTREGUE (Sad Path - State Pattern Rule)
+# Esperado: 400 Bad Request (InvalidOrderStateException) - O fluxo de status é terminal
+PUT {{baseUrl}}/orders/1/status
+Accept: application/json
+
+### 14. Tentar cancelar um pedido que já foi ENTREGUE (Sad Path - State Pattern Rule)
+# Esperado: 400 Bad Request (InvalidOrderStateException) - Pedido entregue não pode ser cancelado
+PUT {{baseUrl}}/orders/1/cancel
+Accept: application/json
+
+
+# =============================================================================
+# ❌ FLUXO DE CANCELAMENTO (CANCELLATION WORKFLOW)
+# =============================================================================
+
+### 15. Criar outro pedido para teste de cancelamento
+# Esperado: 201 Created. Anote o ID retornado. (Normalmente ID 2 se for banco limpo)
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "customerName": "Pedro Souza",
+  "tableNumber": "7",
+  "items": [
+    {
+      "menuItemId": 2,
+      "quantity": 1
+    }
+  ]
+}
+
+### 16. Cancelar o pedido criado (Happy Path)
+# Substitua o "2" pelo ID gerado no passo anterior
+PUT {{baseUrl}}/orders/2/cancel
+Accept: application/json
+
+### 17. Tentar cancelar um pedido que já está CANCELADO (Sad Path - Evita erro 500 anterior!)
+# Esperado: 400 Bad Request (InvalidOrderStateException) - Retorna erro elegante e estruturado
+PUT {{baseUrl}}/orders/2/cancel
+Accept: application/json

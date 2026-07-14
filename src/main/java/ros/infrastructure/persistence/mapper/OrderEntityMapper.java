@@ -10,7 +10,44 @@ import ros.infrastructure.persistence.entity.OrderItemEntity;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class OrderEntityMapper {
+/**
+ * Stateless mapper that translates between the domain model and JPA entities.
+ *
+ * <p>Implements {@link Mapper}{@code <Order, OrderEntity>} for the primary aggregate,
+ * and provides static utility methods for {@link MenuItem} ↔ {@link MenuItemEntity}
+ * and {@link OrderItem} ↔ {@link OrderItemEntity}.</p>
+ *
+ * <p>All domain objects are built through their <em>reconstruction constructors</em>
+ * (never through empty constructors + setters), so invariants validated at creation
+ * time are not re-applied on hydration.</p>
+ */
+public class OrderEntityMapper implements Mapper<Order, OrderEntity> {
+
+    // -------------------------------------------------------------------------
+    // Singleton instance (stateless, safe to share)
+    // -------------------------------------------------------------------------
+
+    public static final OrderEntityMapper INSTANCE = new OrderEntityMapper();
+
+    private OrderEntityMapper() {}
+
+    // -------------------------------------------------------------------------
+    // Mapper<Order, OrderEntity> implementation
+    // -------------------------------------------------------------------------
+
+    @Override
+    public OrderEntity toEntity(Order model) {
+        return toOrderEntity(model);
+    }
+
+    @Override
+    public Order toDomain(OrderEntity entity) {
+        return toOrderDomain(entity);
+    }
+
+    // -------------------------------------------------------------------------
+    // Static helpers (for use in repository implementations)
+    // -------------------------------------------------------------------------
 
     public static MenuItemEntity toEntity(MenuItem model) {
         if (model == null) return null;
@@ -38,26 +75,34 @@ public class OrderEntityMapper {
 
     public static OrderItemEntity toEntity(OrderItem model, OrderEntity orderEntity) {
         if (model == null) return null;
-        OrderItemEntity entity = new OrderItemEntity();
-        entity.setId(model.getId());
-        entity.setMenuItem(toEntity(model.getMenuItem()));
-        entity.setQuantity(model.getQuantity());
-        entity.setOrder(orderEntity);
-        return entity;
+        return new OrderItemEntity(
+                model.getId(),
+                toEntity(model.getMenuItem()),
+                model.getQuantity(),
+                orderEntity
+        );
     }
 
+    /**
+     * Reconstructs a domain {@link OrderItem} from its entity counterpart.
+     * Uses the full reconstruction constructor to avoid calling setters
+     * that are no longer public.
+     */
     public static OrderItem toDomain(OrderItemEntity entity) {
         if (entity == null) return null;
         MenuItem menuItem = toDomain(entity.getMenuItem());
-        OrderItem model = new OrderItem();
-        model.setId(entity.getId());
-        model.setMenuItem(menuItem);
-        model.setPriceAtPurchase(menuItem != null ? menuItem.getPrice() : null);
-        model.setQuantity(entity.getQuantity());
-        return model;
+        Double priceAtPurchase = menuItem != null ? menuItem.getPrice() : null;
+        // Use reconstruction constructor: (id, menuItem, quantity, priceAtPurchase, order)
+        return new OrderItem(
+                entity.getId(),
+                menuItem,
+                entity.getQuantity(),
+                priceAtPurchase,
+                null  // order back-reference is wired by Order's reconstruction constructor
+        );
     }
 
-    public static OrderEntity toEntity(Order model) {
+    public static OrderEntity toOrderEntity(Order model) {
         if (model == null) return null;
         OrderEntity entity = new OrderEntity();
         entity.setId(model.getId());
@@ -74,24 +119,21 @@ public class OrderEntityMapper {
         return entity;
     }
 
-    public static Order toDomain(OrderEntity entity) {
+    public static Order toOrderDomain(OrderEntity entity) {
         if (entity == null) return null;
-        Order model = new Order();
-        model.setId(entity.getId());
-        model.setCustomerName(entity.getCustomerName());
-        model.setTableNumber(entity.getTableNumber());
-        model.setStatus(entity.getStatus());
-        model.setCreatedAt(entity.getCreatedAt());
-        if (entity.getItems() != null) {
-            List<OrderItem> itemModels = entity.getItems().stream()
-                    .map(item -> {
-                        OrderItem domainItem = toDomain(item);
-                        domainItem.setOrder(model);
-                        return domainItem;
-                    })
-                    .collect(Collectors.toList());
-            model.setItems(itemModels);
-        }
-        return model;
+        List<OrderItem> itemModels = entity.getItems() == null
+                ? List.of()
+                : entity.getItems().stream()
+                        .map(OrderEntityMapper::toDomain)
+                        .collect(Collectors.toList());
+        // Use the reconstruction constructor — it wires item→order back-references
+        return new Order(
+                entity.getId(),
+                entity.getCustomerName(),
+                entity.getTableNumber(),
+                itemModels,
+                entity.getStatus(),
+                entity.getCreatedAt()
+        );
     }
 }

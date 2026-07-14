@@ -7,6 +7,9 @@ import org.springframework.stereotype.Component;
 import ros.domain.model.Order;
 import ros.domain.model.Filters.OrderFilter;
 import ros.domain.repository.OrderRepository;
+import ros.infrastructure.exception.EntityPersistenceException;
+import ros.infrastructure.persistence.entity.MenuItemEntity;
+import ros.infrastructure.persistence.entity.OrderItemEntity;
 import ros.infrastructure.persistence.entity.OrderEntity;
 import ros.infrastructure.persistence.mapper.OrderEntityMapper;
 
@@ -14,6 +17,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * JPA-backed implementation of the domain {@link OrderRepository}.
+ * Infrastructure-specific exceptions are thrown here; domain exceptions
+ * are only thrown by the domain model itself.
+ */
 @Component
 public class OrderRepositoryImpl implements OrderRepository {
 
@@ -28,21 +36,34 @@ public class OrderRepositoryImpl implements OrderRepository {
 
     @Override
     public Order save(Order order) {
-        OrderEntity saved = jpaOrderRepository.save(OrderEntityMapper.toEntity(order));
-        return OrderEntityMapper.toDomain(saved);
+        OrderEntity entity = OrderEntityMapper.toOrderEntity(order);
+        if (entity.getItems() != null) {
+            for (OrderItemEntity item : entity.getItems()) {
+                if (item.getMenuItem() != null && item.getMenuItem().getId() != null) {
+                    MenuItemEntity managedMenuItem =
+                            entityManager.find(MenuItemEntity.class, item.getMenuItem().getId());
+                    if (managedMenuItem == null) {
+                        throw new EntityPersistenceException("MenuItem", item.getMenuItem().getId());
+                    }
+                    item.setMenuItem(managedMenuItem);
+                }
+            }
+        }
+        OrderEntity saved = jpaOrderRepository.save(entity);
+        return OrderEntityMapper.toOrderDomain(saved);
     }
 
     @Override
     public Order findById(Long id) {
         return jpaOrderRepository.findById(id)
-                .map(OrderEntityMapper::toDomain)
+                .map(OrderEntityMapper::toOrderDomain)
                 .orElse(null);
     }
 
     @Override
     public List<Order> findAll() {
         return jpaOrderRepository.findAll().stream()
-                .map(OrderEntityMapper::toDomain)
+                .map(OrderEntityMapper::toOrderDomain)
                 .collect(Collectors.toList());
     }
 
@@ -82,7 +103,7 @@ public class OrderRepositoryImpl implements OrderRepository {
 
         query.where(predicates.toArray(new Predicate[0]));
         return entityManager.createQuery(query).getResultList().stream()
-                .map(OrderEntityMapper::toDomain)
+                .map(OrderEntityMapper::toOrderDomain)
                 .collect(Collectors.toList());
     }
 }

@@ -38,6 +38,11 @@ public class OrderController {
         return ResponseEntity.ok(orderApplicationService.getOrdersByFilter(filter));
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<Order> getOrderById(@PathVariable Long id) {
+        return ResponseEntity.ok(orderApplicationService.getOrderById(id));
+    }
+
     @PostMapping
     public ResponseEntity<Order> createOrder(@RequestBody OrderCreationRequest request) {
         Order created = orderApplicationService.createOrder(request);
@@ -47,6 +52,18 @@ public class OrderController {
     @PutMapping("/{id}/status")
     public ResponseEntity<Order> advanceOrderStatus(@PathVariable Long id) {
         Order updated = orderApplicationService.advanceOrderStatus(id);
+        return ResponseEntity.ok(updated);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Order> updateOrder(@PathVariable Long id, @RequestBody OrderCreationRequest request) {
+        Order updated = orderApplicationService.updateOrder(id, request);
+        return ResponseEntity.ok(updated);
+    }
+
+    @PutMapping("/{id}/cancel")
+    public ResponseEntity<Order> cancelOrder(@PathVariable Long id) {
+        Order updated = orderApplicationService.cancelOrder(id);
         return ResponseEntity.ok(updated);
     }
 }

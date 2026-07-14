@@ -5,16 +5,32 @@ import java.util.Objects;
 import ros.domain.exception.InvalidFieldException;
 import ros.domain.exception.InvalidPriceException;
 
+/**
+ * Domain entity representing an item on the restaurant's menu.
+ *
+ * <p>Encapsulation rules:</p>
+ * <ul>
+ *   <li>{@code id} is assigned by the persistence layer and never publicly mutable.</li>
+ *   <li>Availability is toggled through the intentional domain method
+ *       {@link #updateAvailability(boolean)}, not a raw setter.</li>
+ *   <li>All business-critical fields ({@code name}, {@code price}, {@code category})
+ *       are validated on every write.</li>
+ * </ul>
+ */
 public class MenuItem {
+
     private Long id;
     private String name;
     private String description;
     private Double price;
     private String category;
-    private Boolean available = true;
+    private Boolean available;
 
-    public MenuItem() {}
+    // --- Constructors ---
 
+    /**
+     * Creation constructor — used when registering a new menu item.
+     */
     public MenuItem(String name, String description, Double price, String category) {
         setName(name);
         setPrice(price);
@@ -23,6 +39,9 @@ public class MenuItem {
         this.available = true;
     }
 
+    /**
+     * Reconstruction constructor — used by the persistence mapper.
+     */
     public MenuItem(Long id, String name, String description, Double price, String category, Boolean available) {
         this.id = id;
         setName(name);
@@ -38,8 +57,25 @@ public class MenuItem {
         return Boolean.TRUE.equals(available);
     }
 
+    /**
+     * Domain-intent method: explicitly enables or disables this menu item.
+     */
     public void updateAvailability(boolean available) {
         this.available = available;
+    }
+
+    /**
+     * Updates mutable fields from a request. Validation is enforced by the
+     * individual setters following a Fail-Fast strategy.
+     */
+    public void update(String name, String description, Double price, String category, Boolean available) {
+        setName(name);
+        setPrice(price);
+        setCategory(category);
+        this.description = description;
+        if (available != null) {
+            this.available = available;
+        }
     }
 
     @Override
@@ -61,14 +97,10 @@ public class MenuItem {
                 + ", category='" + category + "', available=" + available + "}";
     }
 
-    // --- Getters and Setters ---
+    // --- Getters (no public setId, no raw setAvailable) ---
 
     public Long getId() {
         return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public String getName() {
@@ -111,9 +143,5 @@ public class MenuItem {
 
     public Boolean getAvailable() {
         return available;
-    }
-
-    public void setAvailable(Boolean available) {
-        this.available = available;
     }
 }
