@@ -8,7 +8,6 @@ import ros.domain.model.MenuItem;
 import ros.domain.model.Order;
 import ros.domain.model.OrderItem;
 import ros.domain.model.Filters.OrderFilter;
-import ros.domain.exception.InvalidOrderStateException;
 import ros.domain.repository.MenuItemRepository;
 import ros.domain.repository.OrderRepository;
 

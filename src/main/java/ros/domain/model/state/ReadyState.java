@@ -1,6 +1,5 @@
 package ros.domain.model.state;
 
-import ros.domain.exception.InvalidOrderStateException;
 import ros.domain.model.Order;
 import ros.domain.model.OrderStatus;
 
