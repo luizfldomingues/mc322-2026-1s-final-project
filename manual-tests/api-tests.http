@@ -105,7 +105,7 @@ PUT {{baseUrl}}/orders/1
 Content-Type: application/json
 
 {
-  "customerName": "Luiz F. Domingues",
+  "customerName": "Luiz Felipe",
   "tableNumber": "15",
   "items": [
     {
@@ -164,7 +164,7 @@ POST {{baseUrl}}/orders
 Content-Type: application/json
 
 {
-  "customerName": "Pedro Souza",
+  "customerName": "Breno",
   "tableNumber": "7",
   "items": [
     {
