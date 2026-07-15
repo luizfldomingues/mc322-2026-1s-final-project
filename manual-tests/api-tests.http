@@ -48,8 +48,8 @@ POST {{baseUrl}}/orders
 Content-Type: application/json
 
 {
-  "customerName": "Luiz Domingues",
-  "tableNumber": "15",
+  "customerName": "Luiz",
+  "tableNumber": "13",
   "items": [
     {
       "menuItemId": 1,
