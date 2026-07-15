@@ -79,6 +79,7 @@ public class OrderEntityMapper implements Mapper<Order, OrderEntity> {
                 model.getId(),
                 toEntity(model.getMenuItem()),
                 model.getQuantity(),
+                model.getPriceAtPurchase(),
                 orderEntity
         );
     }
@@ -91,13 +92,13 @@ public class OrderEntityMapper implements Mapper<Order, OrderEntity> {
     public static OrderItem toDomain(OrderItemEntity entity) {
         if (entity == null) return null;
         MenuItem menuItem = toDomain(entity.getMenuItem());
-        Double priceAtPurchase = menuItem != null ? menuItem.getPrice() : null;
+        Double price = entity.getPriceAtPurchase() != null ? entity.getPriceAtPurchase() : (menuItem != null ? menuItem.getPrice() : 0.0);
         // Use reconstruction constructor: (id, menuItem, quantity, priceAtPurchase, order)
         return new OrderItem(
                 entity.getId(),
                 menuItem,
                 entity.getQuantity(),
-                priceAtPurchase,
+                price,
                 null  // order back-reference is wired by Order's reconstruction constructor
         );
     }

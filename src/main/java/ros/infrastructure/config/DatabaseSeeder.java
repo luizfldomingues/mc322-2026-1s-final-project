@@ -63,6 +63,7 @@ public class DatabaseSeeder implements CommandLineRunner {
             OrderItemEntity order1Item1 = new OrderItemEntity();
             order1Item1.setMenuItem(item1);
             order1Item1.setQuantity(2);
+            order1Item1.setPriceAtPurchase(item1.getPrice());
             order1Item1.setOrder(order1);
             entityManager.persist(order1Item1);
             order1.addOrderItem(order1Item1);
@@ -70,6 +71,7 @@ public class DatabaseSeeder implements CommandLineRunner {
             OrderItemEntity order1Item2 = new OrderItemEntity();
             order1Item2.setMenuItem(item3);
             order1Item2.setQuantity(1);
+            order1Item2.setPriceAtPurchase(item3.getPrice());
             order1Item2.setOrder(order1);
             entityManager.persist(order1Item2);
             order1.addOrderItem(order1Item2);
@@ -85,6 +87,7 @@ public class DatabaseSeeder implements CommandLineRunner {
             OrderItemEntity order2Item1 = new OrderItemEntity();
             order2Item1.setMenuItem(item2);
             order2Item1.setQuantity(1);
+            order2Item1.setPriceAtPurchase(item2.getPrice());
             order2Item1.setOrder(order2);
             entityManager.persist(order2Item1);
             order2.addOrderItem(order2Item1);
