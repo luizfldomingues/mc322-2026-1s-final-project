@@ -25,6 +25,9 @@ public class OrderItemEntity {
     @Column(nullable = false)
     private Integer quantity;
 
+    @Column(name = "price_at_purchase", nullable = false)
+    private Double priceAtPurchase;
+
     @ManyToOne
     @JoinColumn(name = "order_id", nullable = false)
     @JsonIgnore
@@ -32,10 +35,11 @@ public class OrderItemEntity {
 
     public OrderItemEntity() {}
 
-    public OrderItemEntity(Long id, MenuItemEntity menuItem, Integer quantity, OrderEntity order) {
+    public OrderItemEntity(Long id, MenuItemEntity menuItem, Integer quantity, Double priceAtPurchase, OrderEntity order) {
         this.id = id;
         this.menuItem = menuItem;
         this.quantity = quantity;
+        this.priceAtPurchase = priceAtPurchase;
         this.order = order;
     }
 
@@ -63,6 +67,14 @@ public class OrderItemEntity {
         this.quantity = quantity;
     }
 
+    public Double getPriceAtPurchase() {
+        return priceAtPurchase;
+    }
+
+    public void setPriceAtPurchase(Double priceAtPurchase) {
+        this.priceAtPurchase = priceAtPurchase;
+    }
+
     public OrderEntity getOrder() {
         return order;
     }
@@ -72,6 +84,6 @@ public class OrderItemEntity {
     }
 
     public Double getSubtotal() {
-        return menuItem != null ? menuItem.getPrice() * quantity : 0.0;
+        return priceAtPurchase != null ? priceAtPurchase * quantity : 0.0;
     }
 }
